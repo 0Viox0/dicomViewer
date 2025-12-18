@@ -1,35 +1,10 @@
 import dicomParser from "dicom-parser";
+import type { DicomResponse, Metadata, ParsedSlice } from "./types";
 
-type ParsedSlice = {
-  pixels: Int16Array;
-  position: number;
-};
-
-type Metadata = {
-  rows?: number;
-  cols?: number;
-  pixelSpacing?: string;
-  sliceThickness?: string;
-  patientName?: string;
-  studyDescription?: string;
-};
-
-type Volume = {
-  width?: number;
-  height?: number;
-  depth?: number;
-  mask: (0 | 1)[][];
-};
-
-type DicomResponse = {
-  metadata: Metadata;
-  volume: Volume;
-};
-
-export function parseDicomSeries(
+export const parseDicomSeries = (
   buffers: Buffer[],
   huThreshold: number,
-): DicomResponse {
+): DicomResponse => {
   const slices: ParsedSlice[] = [];
   let metadata: Metadata = {};
 
@@ -38,10 +13,8 @@ export function parseDicomSeries(
 
     const rows = dataSet.uint16("x00280010");
     const cols = dataSet.uint16("x00280011");
-
     const intercept = dataSet.floatString("x00281052") ?? 0;
     const slope = dataSet.floatString("x00281053") ?? 1;
-
     const position = Number(dataSet.string("x00200032")?.split("\\")[2] ?? 0);
 
     const pixelData = dataSet.elements.x7fe00010;
@@ -96,4 +69,4 @@ export function parseDicomSeries(
       mask,
     },
   };
-}
+};

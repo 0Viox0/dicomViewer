@@ -1,12 +1,15 @@
-import { useEffect, useRef, useState } from "react";
 import axios from "axios";
-import VolumeView from "./VolumeView";
+
+import { useRef, useState } from "react";
+import type { DicomResponse } from "./types";
+import { Metadata } from "./components/Metadata";
+import { VolumeView } from "./components/VolumeView";
 
 import "./App.css";
 
 export default function App() {
   const [files, setFiles] = useState<FileList | null>(null);
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<DicomResponse | null>(null);
   const [hu, setHu] = useState(400);
   const [loading, setLoading] = useState(false);
 
@@ -71,7 +74,12 @@ export default function App() {
 
       {loading && <div className="spinner" />}
 
-      {data && !loading && <VolumeView volume={data.volume} useStep={hu < 0} />}
+      {data && !loading && (
+        <>
+          <Metadata data={data} />
+          <VolumeView volume={data.volume} useStep={hu < 0} />
+        </>
+      )}
     </div>
   );
 }

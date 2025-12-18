@@ -1,11 +1,18 @@
 import * as THREE from "three";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type FC } from "react";
+// @ts-expect-error this module 100% exists
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+import type { Volume } from "../types";
 
-const STEP = 2;
+export type VolumeViewProps = {
+  volume: Volume;
+  useStep: boolean;
+};
 
-export default function VolumeView({ volume, useStep }: any) {
+export const VolumeView: FC<VolumeViewProps> = ({ volume, useStep }) => {
   const ref = useRef<HTMLDivElement>(null);
+
+  const STEP = useStep ? 2 : 1;
 
   useEffect(() => {
     const scene = new THREE.Scene();
@@ -74,4 +81,4 @@ export default function VolumeView({ volume, useStep }: any) {
   }, [volume]);
 
   return <div ref={ref} />;
-}
+};

@@ -1,7 +1,7 @@
 import express from "express";
 import multer from "multer";
 import cors from "cors";
-import { parseDicomSeries } from "./parseDicom";
+import { parseDicomSeries } from "./parser";
 
 const upload = multer();
 const app = express();
