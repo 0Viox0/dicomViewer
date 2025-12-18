@@ -2,7 +2,9 @@ import * as THREE from "three";
 import { useEffect, useRef } from "react";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 
-export default function VolumeView({ volume }: any) {
+const STEP = 2;
+
+export default function VolumeView({ volume, useStep }: any) {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -15,7 +17,7 @@ export default function VolumeView({ volume }: any) {
     ref.current!.appendChild(renderer.domElement);
 
     const controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true; // плавное вращение
+    controls.enableDamping = true;
     controls.dampingFactor = 0.05;
     controls.update();
 
@@ -27,14 +29,14 @@ export default function VolumeView({ volume }: any) {
     const cz = volume.depth / 2;
 
     volume.mask.forEach((slice: number[], z: number) => {
-      slice.forEach((v, i) => {
-        if (v) {
+      for (let i = 0; i < slice.length; i += STEP) {
+        if (slice[i]) {
           const x = (i % volume.width) - cx;
           const y = Math.floor(i / volume.width) - cy;
           const zPos = z - cz;
           points.push(x, y, zPos);
         }
-      });
+      }
     });
 
     geometry.setAttribute(
@@ -47,9 +49,10 @@ export default function VolumeView({ volume }: any) {
 
     scene.add(mesh);
 
+    let frameId: number;
+
     function animate() {
-      requestAnimationFrame(animate);
-      // mesh.rotation.y += 0.005;
+      frameId = requestAnimationFrame(animate);
       controls.update();
       renderer.render(scene, camera);
     }
@@ -57,6 +60,15 @@ export default function VolumeView({ volume }: any) {
     animate();
 
     return () => {
+      cancelAnimationFrame(frameId);
+
+      geometry.dispose();
+      material.dispose();
+      renderer.dispose();
+      controls.dispose();
+
+      scene.clear();
+
       ref.current?.removeChild(renderer.domElement);
     };
   }, [volume]);

@@ -8,16 +8,16 @@ const app = express();
 
 app.use(cors());
 
-app.post("/upload", upload.array("files"), async (req, res) => {
-  const huThreshold = Number(req.query.hu ?? -300);
+app.post("/upload", upload.array("files"), (req, res) => {
+  const huThreshold = Number(req.query.hu ?? 400);
 
   const buffers = (req.files as Express.Multer.File[]).map(
     (file) => file.buffer,
   );
 
-  console.log("started parsing...");
+  console.log("Parsing with HU:", huThreshold);
   const result = parseDicomSeries(buffers, huThreshold);
-  console.log("finished parsing!");
+  console.log("Finished");
 
   res.json(result);
 });

@@ -1,41 +1,77 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import VolumeView from "./VolumeView";
 
-export default function App() {
-  const [data, setData] = useState<any>(null);
-  const [hu, setHu] = useState(-300);
+import "./App.css";
 
-  async function upload(files: FileList | null) {
+export default function App() {
+  const [files, setFiles] = useState<FileList | null>(null);
+  const [data, setData] = useState<any>(null);
+  const [hu, setHu] = useState(400);
+  const [loading, setLoading] = useState(false);
+
+  const debounceRef = useRef<number | null>(null);
+
+  async function sendRequest(currentHu: number) {
     if (!files) return;
 
     const form = new FormData();
     Array.from(files).forEach((f) => form.append("files", f));
 
-    const res = await axios.post(`http://localhost:3001/upload?hu=${hu}`, form);
+    setLoading(true);
+
+    const res = await axios.post(
+      `http://localhost:3001/upload?hu=${currentHu}`,
+      form,
+    );
 
     setData(res.data);
+    setLoading(false);
+  }
+
+  function onHuChange(value: number) {
+    setHu(value);
+
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+
+    debounceRef.current = window.setTimeout(() => {
+      sendRequest(value);
+    }, 400);
   }
 
   return (
-    <div>
-      <input type="file" multiple onChange={(e) => upload(e.target.files)} />
+    <div className="app">
+      <h1>DICOM Volume Viewer</h1>
 
-      <input
-        type="range"
-        min={-1000}
-        max={1000}
-        value={hu}
-        onChange={(e) => setHu(+e.target.value)}
-      />
-      <span>HU: {hu}</span>
+      <div className="controls">
+        <input
+          type="file"
+          multiple
+          onChange={(e) => setFiles(e.target.files)}
+        />
 
-      {data && (
-        <>
-          <pre>{JSON.stringify(data.metadata, null, 2)}</pre>
-          <VolumeView volume={data.volume} />
-        </>
-      )}
+        <button onClick={() => sendRequest(hu)} disabled={!files || loading}>
+          {loading ? "Generating..." : "Generate"}
+        </button>
+
+        <div className="slider">
+          <label>HU Threshold: {hu}</label>
+          <input
+            type="range"
+            min={-1000}
+            max={1000}
+            value={hu}
+            style={{ width: "300px" }}
+            onChange={(e) => onHuChange(+e.target.value)}
+          />
+        </div>
+      </div>
+
+      {loading && <div className="spinner" />}
+
+      {data && !loading && <VolumeView volume={data.volume} useStep={hu < 0} />}
     </div>
   );
 }
